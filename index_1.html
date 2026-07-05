@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DXUI // Personal Interface</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+
+/* DAY -- cool lifted blue-gray, overcast morning light */
+:root {
+  --base:        #2e3035;
+  --surface:     #383c42;
+  --surface2:    #42464d;
+  --border:      rgba(190,170,120,0.18);
+  --glow:        rgba(190,170,120,0.08);
+  --panel-glow:  rgba(200,168,75,0.09);
+  --amber:       #c8a84b;
+  --amber-soft:  rgba(200,168,75,0.6);
+  --amber-dim:   rgba(200,168,75,0.3);
+  --text:        #e4ddd0;
+  --text-mid:    rgba(228,221,208,0.62);
+  --text-low:    rgba(228,221,208,0.35);
+  --accent:      #9bbcc8;
+  --ribbon-bg:   #262930;
+}
+
+/* EVENING -- warm middle, between day blue-gray and late night ember */
+body.evening {
+  --base:        #222028;
+  --surface:     #2c2830;
+  --surface2:    #363238;
+  --border:      rgba(180,140,80,0.16);
+  --glow:        rgba(180,140,80,0.07);
+  --panel-glow:  rgba(180,140,80,0.09);
+  --amber:       #b8882a;
+  --amber-soft:  rgba(184,136,42,0.55);
+  --amber-dim:   rgba(184,136,42,0.28);
+  --text:        #cfc5ae;
+  --text-mid:    rgba(207,197,174,0.55);
+  --text-low:    rgba(207,197,174,0.28);
+  --accent:      #7090a0;
+  --ribbon-bg:   #1a1820;
+}
+
+/* LATE NIGHT -- warm middle, between day and evening */
+body.latenight {
+  --base:        #1a1814;
+  --surface:     #232018;
+  --surface2:    #2c281e;
+  --border:      rgba(196,117,26,0.16);
+  --glow:        rgba(196,117,26,0.08);
+  --panel-glow:  rgba(196,117,26,0.10);
+  --amber:       #c4751a;
+  --amber-soft:  rgba(196,117,26,0.55);
+  --amber-dim:   rgba(196,117,26,0.28);
+  --text:        #d8c8a8;
+  --text-mid:    rgba(216,200,168,0.55);
+  --text-low:    rgba(216,200,168,0.28);
+  --accent:      #7a9096;
+  --ribbon-bg:   #131210;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--base);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: background 1.4s ease;
+  overflow: hidden;
+}
+
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 999;
+  opacity: 0.4;
+}
+
+.ambient-pool { position:fixed; border-radius:50%; pointer-events:none; z-index:0; filter:blur(140px); }
+.pool-top { width:70vw; height:50vh; top:-25vh; left:15vw; background:radial-gradient(ellipse, var(--amber-dim) 0%, transparent 70%); opacity:0.6; }
+.pool-bottom { width:50vw; height:40vh; bottom:-20vh; right:10vw; background:radial-gradient(ellipse, rgba(143,170,179,0.08) 0%, transparent 70%); opacity:0.5; }
+
+/* ── KEY PROMPT SCREEN ───────────────────────────────────────── */
+#key-screen {
+  position: fixed; inset: 0;
+  background: var(--base);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 0;
+}
+
+.key-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 48px 52px;
+  max-width: 480px;
+  width: 90%;
+  position: relative;
+  animation: fadeUp 0.5s ease both;
+}
+
+.key-box::before {
+  content: '';
+  position: absolute; inset: 0;
+  box-shadow: inset 0 0 60px var(--glow), inset 0 1px 0 var(--border);
+  pointer-events: none;
+}
+
+.key-eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.3em;
+  color: var(--text-low);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.key-heading {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--text);
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.key-heading em {
+  font-style: italic;
+  color: var(--amber);
+}
+
+.key-sub {
+  font-size: 12px;
+  color: var(--text-mid);
+  line-height: 1.6;
+  margin-bottom: 28px;
+}
+
+.key-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  padding: 12px 14px;
+  outline: none;
+  transition: border-color 0.3s;
+  margin-bottom: 14px;
+}
+
+.key-input:focus {
+  border-color: var(--amber-soft);
+}
+
+.key-input::placeholder {
+  color: var(--text-low);
+}
+
+.key-btn {
+  width: 100%;
+  background: var(--glow);
+  border: 1px solid var(--amber-soft);
+  color: var(--amber);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.key-btn:hover {
+  background: rgba(201,151,42,0.12);
+}
+
+.key-error {
+  font-size: 10px;
+  color: rgba(220,100,80,0.8);
+  margin-top: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
+  min-height: 16px;
+}
+
+.key-note {
+  font-size: 10px;
+  color: var(--text-low);
+  margin-top: 16px;
+  line-height: 1.5;
+  font-style: italic;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13px;
+}
+
+/* ── DASHBOARD ───────────────────────────────────────────────── */
+#dashboard { display: none; flex-direction: column; min-height: 100vh; position: relative; z-index: 10; }
+
+.shell { display: grid; grid-template-rows: 48px 1fr auto 56px; min-height: 100vh; }
+
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:0 32px; border-bottom:1px solid var(--border); background:rgba(0,0,0,0.2); backdrop-filter:blur(8px); }
+.topbar-left { font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:300; color:var(--text-low); letter-spacing:0.2em; text-transform:uppercase; }
+.topbar-center { font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--amber); letter-spacing:0.08em; }
+.topbar-right { display:flex; align-items:center; gap:16px; }
+
+.mode-toggle { display:flex; gap:4px; }
+.mode-btn { background:none; border:1px solid var(--border); color:var(--text-low); font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.15em; padding:3px 8px; cursor:pointer; transition:all 0.3s; text-transform:uppercase; }
+.mode-btn:hover, .mode-btn.active { border-color:var(--amber-soft); color:var(--amber); background:var(--glow); }
+
+.key-reset-btn { background:none; border:none; color:var(--text-low); font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.15em; cursor:pointer; text-transform:uppercase; padding:3px 6px; transition:color 0.3s; }
+.key-reset-btn:hover { color:var(--amber); }
+
+.status-pip { width:5px; height:5px; border-radius:50%; background:var(--amber); box-shadow:0 0 6px var(--amber); animation:breathe 3s ease-in-out infinite; }
+@keyframes breathe { 0%,100%{opacity:0.9; box-shadow:0 0 6px var(--amber);} 50%{opacity:0.4; box-shadow:0 0 2px var(--amber);} }
+
+.main { display:grid; grid-template-columns:280px 1fr 280px; gap:20px; padding:28px 28px 20px; overflow:hidden; }
+
+.panel { background:var(--surface); border:1px solid var(--border); border-radius:2px; position:relative; overflow:hidden; display:flex; flex-direction:column; transition:background 1.4s ease, border-color 1.4s ease; animation:fadeUp 0.6s ease both; filter:drop-shadow(0 8px 24px var(--panel-glow)); }
+.panel::before { content:''; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 40px var(--glow), inset 0 1px 0 var(--border); pointer-events:none; z-index:1; }
+
+.panel-label { font-family:'JetBrains Mono',monospace; font-size:8px; font-weight:400; letter-spacing:0.25em; text-transform:uppercase; color:var(--text-low); padding:14px 18px 0; }
+.panel-divider { height:1px; background:var(--border); margin:10px 18px 0; }
+.panel-body { padding:16px 18px 18px; flex:1; position:relative; z-index:2; }
+
+.center-col { display:flex; flex-direction:column; gap:20px; }
+
+.greeting-panel { background:var(--surface); border:1px solid var(--border); border-radius:2px; position:relative; overflow:hidden; padding:36px 40px 32px; text-align:center; transition:background 1.4s ease, border-color 1.4s ease; filter:drop-shadow(0 8px 32px var(--panel-glow)); }
+.greeting-panel::before { content:''; position:absolute; inset:0; box-shadow:inset 0 0 60px var(--glow), inset 0 1px 0 var(--border); pointer-events:none; }
+
+.greeting-eyebrow { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.3em; color:var(--text-low); text-transform:uppercase; margin-bottom:16px; }
+.greeting-text { font-family:'Cormorant Garamond',serif; font-size:52px; font-weight:300; line-height:1.05; color:var(--text); letter-spacing:-0.01em; }
+.greeting-name { font-style:italic; color:var(--amber); }
+.greeting-date { font-family:'Cormorant Garamond',serif; font-size:15px; font-weight:300; color:var(--text-mid); margin-top:14px; letter-spacing:0.04em; }
+
+.brief-panel { background:var(--surface); border:1px solid var(--border); border-radius:2px; position:relative; overflow:hidden; flex:1; transition:background 1.4s ease, border-color 1.4s ease; filter:drop-shadow(0 8px 24px var(--panel-glow)); }
+.brief-panel::before { content:''; position:absolute; inset:0; box-shadow:inset 0 0 40px var(--glow), inset 0 1px 0 var(--border); pointer-events:none; z-index:1; }
+.brief-body { padding:16px 20px 20px; position:relative; z-index:2; }
+.brief-text { font-family:'Cormorant Garamond',serif; font-size:17px; font-weight:400; line-height:1.7; color:var(--text-mid); font-style:italic; }
+
+.weather-temp-row { display:flex; align-items:baseline; gap:6px; margin-top:4px; }
+.weather-temp-num { font-family:'Cormorant Garamond',serif; font-size:64px; font-weight:300; line-height:1; color:var(--text); }
+.weather-temp-unit { font-family:'Cormorant Garamond',serif; font-size:24px; font-weight:300; color:var(--text-mid); }
+.weather-desc { font-family:'Inter',sans-serif; font-size:11px; font-weight:400; letter-spacing:0.12em; text-transform:uppercase; color:var(--amber); margin-top:6px; }
+.weather-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:18px; }
+.weather-cell { background:var(--surface2); border:1px solid var(--border); padding:10px 12px; border-radius:1px; }
+.weather-cell-label { font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:0.2em; text-transform:uppercase; color:var(--text-low); }
+.weather-cell-value { font-family:'JetBrains Mono',monospace; font-size:15px; color:var(--text); margin-top:4px; }
+.weather-summary { margin-top:14px; font-family:'Cormorant Garamond',serif; font-size:14px; font-style:italic; color:var(--text-mid); line-height:1.6; }
+
+.event-item { display:grid; grid-template-columns:44px 1fr; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); align-items:start; }
+.event-item:last-child { border-bottom:none; }
+.event-time { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--amber-soft); line-height:1.5; }
+.event-title { font-size:13px; font-weight:400; color:var(--text); line-height:1.3; }
+.event-sub { font-size:10px; color:var(--text-low); margin-top:2px; }
+.event-pill { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:7px; letter-spacing:0.15em; text-transform:uppercase; padding:2px 7px; border-radius:20px; margin-top:4px; }
+.pill-work { background:rgba(201,151,42,0.1); border:1px solid rgba(201,151,42,0.2); color:var(--amber); }
+.pill-personal { background:rgba(143,170,179,0.08); border:1px solid rgba(143,170,179,0.18); color:var(--accent); }
+
+.email-item { padding:10px 0; border-bottom:1px solid var(--border); }
+.email-item:last-child { border-bottom:none; }
+.email-from { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.1em; color:var(--amber-soft); text-transform:uppercase; display:flex; align-items:center; gap:6px; }
+.unread-dot { width:4px; height:4px; border-radius:50%; background:var(--amber); box-shadow:0 0 5px var(--amber); flex-shrink:0; }
+.email-subject { font-size:13px; font-weight:400; color:var(--text); margin-top:3px; line-height:1.3; }
+.email-preview { font-size:11px; color:var(--text-low); margin-top:3px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+.ribbon { background:var(--ribbon-bg); border-top:1px solid var(--border); padding:0 28px; display:flex; align-items:center; overflow:hidden; height:56px; }
+.ribbon-label { font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:0.25em; color:var(--text-low); text-transform:uppercase; white-space:nowrap; padding-right:20px; border-right:1px solid var(--border); margin-right:20px; }
+.ribbon-scroll { display:flex; gap:40px; overflow-x:auto; scrollbar-width:none; flex:1; }
+.ribbon-scroll::-webkit-scrollbar { display:none; }
+.ribbon-item { display:flex; align-items:center; gap:10px; white-space:nowrap; flex-shrink:0; }
+.ribbon-icon { font-size:10px; color:var(--amber-soft); }
+.ribbon-text { font-size:12px; color:var(--text-mid); }
+.ribbon-text strong { color:var(--text); font-weight:500; }
+.ribbon-sep { width:1px; height:20px; background:var(--border); flex-shrink:0; }
+
+.loading-state { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:0.15em; color:var(--text-low); animation:flicker 1.5s ease-in-out infinite; text-transform:uppercase; }
+@keyframes flicker { 0%,100%{opacity:0.8} 50%{opacity:0.2} }
+.empty-state { font-family:'Cormorant Garamond',serif; font-size:14px; font-style:italic; color:var(--text-low); }
+.error-state { font-family:'JetBrains Mono',monospace; font-size:9px; color:rgba(200,100,80,0.6); letter-spacing:0.08em; line-height:1.6; }
+
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+</style>
+<script src="https://apis.google.com/js/api.js" async defer></script>
+</head>
+<body>
+
+<div class="ambient-pool pool-top"></div>
+<div class="ambient-pool pool-bottom"></div>
+
+<!-- KEY PROMPT -->
+<div id="key-screen">
+  <div class="key-box">
+    <div class="key-eyebrow">DXUI // Authorization Required</div>
+    <div class="key-heading">Welcome,<br><em>Jessi.</em></div>
+    <p class="key-sub">Enter your Anthropic API key to activate the interface. It will be stored locally on this device and never uploaded anywhere.</p>
+    <input class="key-input" type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off" />
+    <button class="key-btn" onclick="saveKey()">Activate Interface</button>
+    <div class="key-error" id="key-error"></div>
+    <div class="key-note">Your key is saved in your browser only. It stays on this machine.</div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+<div class="shell">
+
+  <div class="topbar">
+    <div class="topbar-left">Personal Interface &nbsp;·&nbsp; Davisburg, MI</div>
+    <div class="topbar-center" id="live-clock">--:--:--</div>
+    <div class="topbar-right">
+      <div class="mode-toggle">
+        <button class="mode-btn" onclick="setMode('day')" id="btn-day">Day</button>
+        <button class="mode-btn" onclick="setMode('evening')" id="btn-evening">Evening</button>
+        <button class="mode-btn" onclick="setMode('latenight')" id="btn-latenight">Late Night</button>
+        <button class="mode-btn" onclick="setMode('auto')" id="btn-auto">Auto</button>
+      </div>
+      <button class="key-reset-btn" onclick="resetKey()" title="Change API key">⟳ key</button>
+      <button class="key-reset-btn" onclick="refreshData()" title="Refresh data">⟳ refresh</button>
+      <button class="mode-btn" id="google-btn" onclick="handleGoogleAuth()">⟳ Google</button>
+      <div class="status-pip"></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="panel">
+      <div class="panel-label">Atmospheric</div>
+      <div class="panel-divider"></div>
+      <div class="panel-body" id="weather-body"><div class="loading-state">Acquiring signal...</div></div>
+    </div>
+
+    <div class="center-col">
+      <div class="greeting-panel">
+        <div class="greeting-eyebrow" id="greeting-eyebrow"></div>
+        <div class="greeting-text" id="greeting-text">Good morning,<br><span class="greeting-name">Jessi.</span></div>
+        <div class="greeting-date" id="greeting-date"></div>
+      </div>
+      <div class="panel" style="flex:1">
+        <div class="panel-label">Today's Schedule</div>
+        <div class="panel-divider"></div>
+        <div class="panel-body" id="schedule-body"><div class="loading-state">Syncing calendar...</div></div>
+      </div>
+      <div class="brief-panel">
+        <div class="panel-label" style="padding:14px 20px 0; position:relative; z-index:2;">Daily Brief</div>
+        <div style="height:1px; background:var(--border); margin:10px 20px 0; position:relative; z-index:2;"></div>
+        <div class="brief-body" id="brief-body"><div class="loading-state">Preparing your brief...</div></div>
+      </div>
+    </div>
+
+    <div class="panel" style="display:flex;flex-direction:column;gap:0;">
+      <!-- QUICK NOTES -->
+      <div class="panel-label">Quick Notes</div>
+      <div class="panel-divider"></div>
+      <div class="panel-body" style="flex:1;display:flex;flex-direction:column;gap:0;padding-bottom:10px;">
+        <textarea id="quick-notes"
+          placeholder="Type a note, reminder, or task..."
+          style="flex:1;width:100%;min-height:140px;background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:'Inter',sans-serif;font-size:12px;font-weight:300;line-height:1.6;padding:10px 12px;resize:none;outline:none;border-radius:1px;transition:border-color 0.3s;"
+          oninput="saveNotes()"
+        ></textarea>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--text-low);margin-top:6px;letter-spacing:0.1em;">AUTO-SAVED LOCALLY</div>
+      </div>
+
+      <!-- DIVIDER -->
+      <div style="height:1px;background:var(--border);margin:0 18px;"></div>
+
+      <!-- COUNTDOWNS -->
+      <div class="panel-label" style="margin-top:14px;">Countdowns</div>
+      <div style="height:1px;background:var(--border);margin:10px 18px 0;"></div>
+      <div class="panel-body" id="countdown-body"></div>
+    </div>
+  </div>
+
+  <div class="ribbon">
+    <div class="ribbon-label">Upcoming</div>
+    <div class="ribbon-scroll" id="ribbon-body">
+      <div class="ribbon-item"><span class="loading-state">Loading...</span></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// ── API KEY MANAGEMENT ────────────────────────────────────────
+const KEY_STORAGE = 'dxui_api_key';
+
+function getKey() { return localStorage.getItem(KEY_STORAGE); }
+
+function saveKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val.startsWith('sk-ant-')) {
+    document.getElementById('key-error').textContent = 'Key should start with sk-ant- -- check and try again.';
+    return;
+  }
+  localStorage.setItem(KEY_STORAGE, val);
+  bootDashboard();
+}
+
+function resetKey() {
+  localStorage.removeItem(KEY_STORAGE);
+  location.reload();
+}
+
+document.getElementById('api-key-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') saveKey();
+});
+
+function bootDashboard() {
+  document.getElementById('key-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'flex';
+  initDashboard();
+}
+
+// ── STARTUP ────────────────────────────────────────────────────
+(function() {
+  // Step 1: If Google just redirected back with a token in the hash, save it
+  try {
+    const hash = window.location.hash.substring(1);
+    if (hash) {
+      const params = new URLSearchParams(hash);
+      const token = params.get('access_token');
+      if (token) {
+        const expiresIn = parseInt(params.get('expires_in') || '3600');
+        localStorage.setItem('dxui_google_token', JSON.stringify({
+          token,
+          expiry: Date.now() + (expiresIn * 1000)
+        }));
+        // Clean the URL so it doesn't confuse anything on next load
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    }
+  } catch(e) { console.error('Hash parse error:', e); }
+
+  // Step 2: If we have an API key, show the dashboard
+  // If not, show the key prompt
+  if (getKey()) {
+    bootDashboard();
+  }
+  // If no key, key-screen is already visible by default -- nothing to do
+})();
+
+// ── CLOCK ─────────────────────────────────────────────────────
+function tickClock() {
+  const now = new Date();
+  document.getElementById('live-clock').textContent =
+    [now.getHours(), now.getMinutes(), now.getSeconds()].map(n => String(n).padStart(2,'0')).join(':');
+}
+setInterval(tickClock, 1000);
+tickClock();
+
+// ── GREETING ──────────────────────────────────────────────────
+function setGreeting() {
+  const now = new Date();
+  const h = now.getHours();
+  const salutation = h < 12 ? 'Good morning,' : h < 17 ? 'Good afternoon,' : 'Good evening,';
+  document.getElementById('greeting-text').innerHTML = `${salutation}<br><span class="greeting-name">Jessi.</span>`;
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('greeting-eyebrow').textContent = `${days[now.getDay()]} · ${months[now.getMonth()]} ${now.getDate()}`;
+  document.getElementById('greeting-date').textContent = now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+}
+setGreeting();
+setInterval(setGreeting, 60000);
+
+// ── MODE THEMING ───────────────────────────────────────────────
+let manualMode = null;
+function getAutoMode() {
+  const h = new Date().getHours();
+  if (h >= 6 && h < 16) return 'day';
+  if (h >= 16 && h < 21) return 'evening';
+  return 'latenight';
+}
+function applyMode(mode) {
+  document.body.classList.remove('evening','latenight');
+  if (mode === 'evening') document.body.classList.add('evening');
+  if (mode === 'latenight') document.body.classList.add('latenight');
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(manualMode ? `btn-${manualMode}` : 'btn-auto')?.classList.add('active');
+}
+function setMode(mode) {
+  manualMode = mode === 'auto' ? null : mode;
+  applyMode(manualMode || getAutoMode());
+}
+applyMode(getAutoMode());
+document.getElementById('btn-auto').classList.add('active');
+setInterval(() => { if (!manualMode) applyMode(getAutoMode()); }, 60000);
+
+// ── CLAUDE API ─────────────────────────────────────────────────
+async function callClaude(system, user, mcpServers) {
+  const key = getKey();
+  const body = { model:'claude-sonnet-4-6', max_tokens:1000, system, messages:[{role:'user',content:user}] };
+  if (mcpServers) body.mcp_servers = mcpServers;
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) { const e = await res.json().catch(()=>({})); throw new Error(e.error?.message || `HTTP ${res.status}`); }
+  const data = await res.json();
+  return data.content?.find(b => b.type === 'text')?.text?.trim() || '';
+}
+
+function parseJSON(raw, fallback) {
+  try { return JSON.parse(raw.replace(/```json|```/g,'').trim()); } catch { return fallback; }
+}
+
+// ── WEATHER (Open-Meteo, no API key needed) ─────────────────
+async function loadWeather() {
+  try {
+    const lat = 42.7523, lon = -83.5385;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,apparent_temperature,weathercode,wind_speed_10m,relative_humidity_2m,uv_index&hourly=temperature_2m,precipitation_probability&daily=temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=1&timezone=America%2FDetroit`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Weather API ${res.status}`);
+    const data = await res.json();
+    const c = data.current;
+
+    const codeMap = {
+      0:'Clear',1:'Mostly Clear',2:'Partly Cloudy',3:'Overcast',
+      45:'Foggy',48:'Rime Fog',51:'Light Drizzle',53:'Drizzle',55:'Heavy Drizzle',
+      61:'Light Rain',63:'Rain',65:'Heavy Rain',71:'Light Snow',73:'Snow',75:'Heavy Snow',
+      77:'Snow Grains',80:'Showers',81:'Rain Showers',82:'Heavy Showers',
+      85:'Snow Showers',86:'Heavy Snow Showers',95:'Thunderstorm',99:'Severe Thunderstorm'
+    };
+
+    const temp = Math.round(c.temperature_2m);
+    const feels = Math.round(c.apparent_temperature);
+    const wind = Math.round(c.wind_speed_10m);
+    const humidity = c.relative_humidity_2m;
+    const desc = codeMap[c.weathercode] || 'Unknown';
+
+    // Simple plain-english summary
+    let summary = '';
+    if (c.weathercode >= 95) summary = 'Thunderstorms expected -- stay indoors if you can.';
+    else if (c.weathercode >= 61) summary = 'Rain in the area -- bring an umbrella.';
+    else if (c.weathercode >= 51) summary = 'Light drizzle possible -- a jacket would help.';
+    else if (c.weathercode >= 71) summary = 'Snow expected -- allow extra time if driving.';
+    else if (c.weathercode === 3) summary = 'Overcast skies today.';
+    else if (c.weathercode <= 1) summary = feels < 32 ? 'Clear but cold -- dress warmly.' : feels > 85 ? 'Clear and warm today.' : 'Clear skies today.';
+    else summary = 'Variable conditions -- check back later.';
+
+    // Parse daily data
+    const daily = data.daily;
+    const high = Math.round(daily.temperature_2m_max[0]);
+    const low = Math.round(daily.temperature_2m_min[0]);
+    const rainChance = daily.precipitation_probability_max[0];
+    const uvIndex = Math.round(c.uv_index || 0);
+
+    // Parse sunrise/sunset
+    const sunriseRaw = daily.sunrise[0];
+    const sunsetRaw = daily.sunset[0];
+    const sunrise = new Date(sunriseRaw).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+    const sunset = new Date(sunsetRaw).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+
+    // Get next 4 hourly temps
+    const now = new Date();
+    const currentHour = now.getHours();
+    const hourly = data.hourly;
+    const nextHours = [];
+    for (let i = 0; i < hourly.time.length && nextHours.length < 4; i++) {
+      const h = new Date(hourly.time[i]).getHours();
+      const hDate = new Date(hourly.time[i]);
+      if (hDate > now) {
+        const label = hDate.toLocaleTimeString('en-US',{hour:'numeric',hour12:true});
+        nextHours.push({ label, temp: Math.round(hourly.temperature_2m[i]), rain: hourly.precipitation_probability[i] });
+      }
+    }
+
+    document.getElementById('weather-body').innerHTML = `
+      <div class="weather-temp-row"><div class="weather-temp-num">${temp}</div><div class="weather-temp-unit">°F</div></div>
+      <div class="weather-desc">${desc}</div>
+      <div class="weather-grid">
+        <div class="weather-cell"><div class="weather-cell-label">Feels Like</div><div class="weather-cell-value">${feels}°</div></div>
+        <div class="weather-cell"><div class="weather-cell-label">Humidity</div><div class="weather-cell-value">${humidity}%</div></div>
+        <div class="weather-cell"><div class="weather-cell-label">Wind</div><div class="weather-cell-value">${wind} mph</div></div>
+        <div class="weather-cell"><div class="weather-cell-label">UV Index</div><div class="weather-cell-value">${uvIndex}</div></div>
+        <div class="weather-cell"><div class="weather-cell-label">High / Low</div><div class="weather-cell-value">${high}° / ${low}°</div></div>
+        <div class="weather-cell"><div class="weather-cell-label">Rain Chance</div><div class="weather-cell-value">${rainChance}%</div></div>
+        <div class="weather-cell"><div class="weather-cell-label">Sunrise</div><div class="weather-cell-value" style="font-size:11px">${sunrise}</div></div>
+        <div class="weather-cell"><div class="weather-cell-label">Sunset</div><div class="weather-cell-value" style="font-size:11px">${sunset}</div></div>
+      </div>
+      <div class="weather-summary">${summary}</div>
+      ${nextHours.length ? `
+      <div style="margin-top:14px;">
+        <div class="weather-cell-label" style="margin-bottom:8px;">Hourly</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+          ${nextHours.map(h => `
+            <div class="weather-cell" style="text-align:center;padding:8px 4px;">
+              <div class="weather-cell-label">${h.label}</div>
+              <div class="weather-cell-value" style="font-size:13px;margin-top:3px;">${h.temp}°</div>
+              <div style="font-size:9px;color:var(--accent);margin-top:2px;">${h.rain}%</div>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}`;
+  } catch(e) {
+    document.getElementById('weather-body').innerHTML = `<div class="error-state">Signal unavailable<br>${e.message}</div>`;
+  }
+}
+
+// ── GOOGLE OAUTH ───────────────────────────────────────────────
+const GOOGLE_CLIENT_ID = '978390186611-dm3fd8itl1nojqrn84jl69gq5nblvb9d.apps.googleusercontent.com';
+const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly';
+let googleToken = null;
+
+async function callGoogleAPI(url) {
+  const res = await fetch(url, {
+    headers: { 'Authorization': `Bearer ${googleToken}` }
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(()=>({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+// Check URL hash for token on page load (returned by Google implicit flow)
+function checkHashForToken() {
+  const hash = window.location.hash.substring(1);
+  if (!hash) return false;
+  const params = new URLSearchParams(hash);
+  const token = params.get('access_token');
+  const expiresIn = parseInt(params.get('expires_in') || '3600');
+  if (token) {
+    localStorage.setItem('dxui_google_token', JSON.stringify({
+      token,
+      expiry: Date.now() + (expiresIn * 1000)
+    }));
+    // Clean the hash from the URL without reloading
+    history.replaceState(null, '', window.location.pathname);
+    return token;
+  }
+  return false;
+}
+
+function handleGoogleAuth() {
+  // Check stored token first
+  const stored = localStorage.getItem('dxui_google_token');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed.expiry > Date.now()) {
+        googleToken = parsed.token;
+        document.getElementById('google-btn').textContent = '✓ Google';
+        document.getElementById('google-btn').classList.add('active');
+        loadSchedule();
+        loadEmail();
+        loadRibbon();
+        return;
+      }
+    } catch(e) {}
+    localStorage.removeItem('dxui_google_token');
+  }
+
+  // Redirect to Google -- token comes back in URL hash, page reloads once
+  // but checkHashForToken() catches it before showing the key prompt
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: 'https://jessiharm.github.io/DXUI/',
+    response_type: 'token',
+    scope: GOOGLE_SCOPES,
+    include_granted_scopes: 'true'
+  });
+  window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+}
+
+function initGoogleAuth() {
+  // Check hash first (returning from Google auth)
+  const hashToken = checkHashForToken();
+  if (hashToken) {
+    googleToken = hashToken;
+    document.getElementById('google-btn').textContent = '✓ Google';
+    document.getElementById('google-btn').classList.add('active');
+    return true;
+  }
+  // Check stored token
+  const stored = localStorage.getItem('dxui_google_token');
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed.expiry > Date.now()) {
+        googleToken = parsed.token;
+        document.getElementById('google-btn').textContent = '✓ Google';
+        document.getElementById('google-btn').classList.add('active');
+        return true;
+      }
+    } catch(e) {}
+    localStorage.removeItem('dxui_google_token');
+  }
+  return false;
+}
+
+// ── SCHEDULE ───────────────────────────────────────────────────
+async function loadSchedule() {
+  if (!googleToken) {
+    document.getElementById('schedule-body').innerHTML = `<div class="empty-state">Sign in with Google to load your schedule.</div>`;
+    return;
+  }
+  try {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
+    const calUrl = `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(start)}&timeMax=${encodeURIComponent(end)}&singleEvents=true&orderBy=startTime&maxResults=10`;
+    const response = await callGoogleAPI(calUrl);
+    const events = response.items || [];
+    if (!events.length) {
+      document.getElementById('schedule-body').innerHTML = `<div class="empty-state">Nothing scheduled today.</div>`;
+      return;
+    }
+    document.getElementById('schedule-body').innerHTML = events.map(e => {
+      const isAllDay = !!e.start.date;
+      let timeStr = 'All day';
+      let endStr = '';
+      if (!isAllDay) {
+        const s = new Date(e.start.dateTime);
+        const en = new Date(e.end.dateTime);
+        timeStr = s.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+        endStr = en.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true});
+      }
+      const loc = e.location || '';
+      const type = loc.toLowerCase().includes('rink') || loc.toLowerCase().includes('skate') || e.summary.toLowerCase().includes('work') || e.summary.toLowerCase().includes('shift') ? 'work' : 'personal';
+      return `<div class="event-item">
+        <div class="event-time">${timeStr}${endStr ? '<br>'+endStr : ''}</div>
+        <div>
+          <div class="event-title">${e.summary}</div>
+          ${loc ? `<div class="event-sub">${loc}</div>` : ''}
+          <span class="event-pill ${type === 'work' ? 'pill-work' : 'pill-personal'}">${type}</span>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('schedule-body').innerHTML = `<div class="error-state">Calendar unavailable<br>${e.message}</div>`;
+  }
+}
+
+// ── EMAIL removed -- replaced with notes + countdown panel ──
+
+// ── RIBBON ─────────────────────────────────────────────────────
+async function loadRibbon() {
+  if (!googleToken) {
+    document.getElementById('ribbon-body').innerHTML = `<div class="ribbon-item"><span class="empty-state" style="font-size:12px">Sign in with Google to load upcoming events.</span></div>`;
+    return;
+  }
+  try {
+    gapi.client.setToken({ access_token: googleToken });
+    const now = new Date();
+    const twoWeeks = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const response = await gapi.client.calendar.events.list({
+      calendarId: 'primary',
+      timeMin: now.toISOString(),
+      timeMax: twoWeeks.toISOString(),
+      singleEvents: true,
+      orderBy: 'startTime',
+      maxResults: 20
+    });
+    const events = (response.result.items || []).filter(e => {
+      const t = e.summary.toLowerCase();
+      return t.includes('birthday') || t.includes('anniversary') || t.includes('appointment') || t.includes('doctor') || t.includes('dentist') || t.includes('court') || e.start.date;
+    });
+    if (!events.length) {
+      document.getElementById('ribbon-body').innerHTML = `<div class="ribbon-item"><span class="empty-state" style="font-size:12px">Nothing notable in the next two weeks.</span></div>`;
+      return;
+    }
+    document.getElementById('ribbon-body').innerHTML = events.map((e, i) => {
+      const d = e.start.date ? new Date(e.start.date + 'T00:00:00') : new Date(e.start.dateTime);
+      const dateStr = d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+      return `${i > 0 ? '<div class="ribbon-sep"></div>' : ''}
+        <div class="ribbon-item"><span class="ribbon-icon">◦</span><span class="ribbon-text"><strong>${dateStr}</strong> &nbsp;${e.summary}</span></div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('ribbon-body').innerHTML = `<div class="ribbon-item"><span class="error-state">${e.message}</span></div>`;
+  }
+}
+
+// ── DAILY BRIEF ────────────────────────────────────────────────
+async function loadBrief() {
+  if (!getKey()) {
+    document.getElementById('brief-body').innerHTML = `<div class="empty-state">Enter your API key to load your daily brief.</div>`;
+    return;
+  }
+  try {
+    const now = new Date();
+    const h = now.getHours();
+    const timeCtx = h < 12 ? 'morning' : h < 17 ? 'afternoon' : 'evening';
+    const dateStr = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    const raw = await callClaude(
+      `You are a calm, warm, quietly intelligent personal assistant. Write a 2-3 sentence daily briefing for Jessi.
+Tone: composed, personal, gently helpful. Not chirpy. Not corporate.
+Reference the time of day (${timeCtx}), date (${dateStr}). She works closing shifts at Detroit Skating Club, is pursuing a BBA at Oakland University, and is job searching in operations and analyst roles.
+2-3 sentences only. No lists. Warm considered prose.`,
+      `Write Jessi's daily brief for this ${timeCtx}.`
+    );
+    document.getElementById('brief-body').innerHTML = `<div class="brief-text">${raw}</div>`;
+  } catch(e) {
+    document.getElementById('brief-body').innerHTML = `<div class="error-state">Brief unavailable<br>${e.message}</div>`;
+  }
+}
+
+// ── REFRESH ────────────────────────────────────────────────────
+function refreshData() {
+  document.getElementById('weather-body').innerHTML = '<div class="loading-state">Acquiring signal...</div>';
+  document.getElementById('schedule-body').innerHTML = '<div class="loading-state">Syncing calendar...</div>';
+  document.getElementById('brief-body').innerHTML = '<div class="loading-state">Preparing your brief...</div>';
+  document.getElementById('ribbon-body').innerHTML = '<div class="ribbon-item"><span class="loading-state">Loading...</span></div>';
+  loadWeather();
+  loadBrief();
+  loadSchedule();
+  loadRibbon();
+}
+
+// ── QUICK NOTES ─────────────────────────────────────────────────
+function saveNotes() {
+  localStorage.setItem('dxui_notes', document.getElementById('quick-notes').value);
+}
+
+function loadNotes() {
+  const saved = localStorage.getItem('dxui_notes') || '';
+  document.getElementById('quick-notes').value = saved;
+}
+
+// ── COUNTDOWNS ──────────────────────────────────────────────────
+function renderCountdowns() {
+  const countdowns = [
+    { label: 'Court Filing Deadline', date: '2026-07-14', urgent: true },
+    { label: 'Oakland University Fall Term', date: '2026-09-02', urgent: false },
+  ];
+
+  const now = new Date();
+  now.setHours(0,0,0,0);
+
+  document.getElementById('countdown-body').innerHTML = countdowns.map(c => {
+    const target = new Date(c.date);
+    target.setHours(0,0,0,0);
+    const diff = Math.round((target - now) / (1000 * 60 * 60 * 24));
+    const label = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : diff < 0 ? `${Math.abs(diff)}d ago` : `${diff} days`;
+    const color = diff <= 3 ? 'rgba(220,100,80,0.8)' : diff <= 7 ? 'var(--amber)' : 'var(--text)';
+    return `
+      <div class="event-item">
+        <div class="event-time" style="color:${color};font-size:11px;">${label}</div>
+        <div>
+          <div class="event-title" style="font-size:12px;">${c.label}</div>
+          <div class="event-sub">${target.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── INIT ───────────────────────────────────────────────────────
+function initDashboard() {
+  initGoogleAuth();
+  loadWeather();
+  loadBrief();
+  loadSchedule();
+  loadRibbon();
+  loadNotes();
+  renderCountdowns();
+}
+</script>
+</body>
+</html>

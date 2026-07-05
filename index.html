@@ -548,41 +548,49 @@ function loadGapiClient() {
 function handleGoogleAuth() {
   const stored = localStorage.getItem('dxui_google_token');
   if (stored) {
-    const parsed = JSON.parse(stored);
-    if (parsed.expiry > Date.now()) {
-      googleToken = parsed.token;
-      loadSchedule();
-      loadEmail();
-      loadRibbon();
-      document.getElementById('google-btn').textContent = '✓ Google';
-      document.getElementById('google-btn').classList.add('active');
-      return;
-    }
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed.expiry > Date.now()) {
+        googleToken = parsed.token;
+        gapi.client.setToken({ access_token: googleToken });
+        loadSchedule();
+        loadEmail();
+        loadRibbon();
+        document.getElementById('google-btn').textContent = '✓ Google';
+        document.getElementById('google-btn').classList.add('active');
+        return;
+      }
+    } catch(e) {}
+    localStorage.removeItem('dxui_google_token');
   }
-  // Request new token
+  // Use token client (popup, no redirect)
   const client = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: GOOGLE_SCOPES,
     callback: async (response) => {
       if (response.error) {
         console.error('Google auth error:', response.error);
+        document.getElementById('google-btn').textContent = '✗ Google';
         return;
       }
       googleToken = response.access_token;
-      // Store with expiry
       localStorage.setItem('dxui_google_token', JSON.stringify({
         token: googleToken,
-        expiry: Date.now() + (response.expires_in * 1000)
+        expiry: Date.now() + ((response.expires_in || 3600) * 1000)
       }));
       gapi.client.setToken({ access_token: googleToken });
       document.getElementById('google-btn').textContent = '✓ Google';
       document.getElementById('google-btn').classList.add('active');
-      loadSchedule();
-      loadEmail();
-      loadRibbon();
+      await loadSchedule();
+      await loadEmail();
+      await loadRibbon();
+    },
+    error_callback: (err) => {
+      console.error('Token client error:', err);
     }
   });
-  client.requestAccessToken();
+  // requestAccessToken always uses a popup, never redirects
+  client.requestAccessToken({ prompt: 'consent' });
 }
 
 // Auto-restore Google token on load
